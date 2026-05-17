@@ -57,14 +57,29 @@ class WhisperTranscriber:
             if url.lower().endswith(('.mp3', '.wav', '.m4a', '.aac', '.flac', '.ogg')):
                 try:
                     print("Detected direct audio file - downloading...")
-                    response = requests.get(url, timeout=300, stream=True)
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                    response = requests.get(url, timeout=300, stream=True, headers=headers, allow_redirects=True)
                     response.raise_for_status()
+
+                    total_size = int(response.headers.get('content-length', 0))
+                    if total_size > 500 * 1024 * 1024:  # 500MB limit
+                        raise ValueError(f"File too large: {total_size / 1024 / 1024:.0f}MB (max 500MB)")
+
+                    downloaded = 0
                     with open(audio_path, 'wb') as f:
                         for chunk in response.iter_content(chunk_size=8192):
                             if chunk:
                                 f.write(chunk)
+                                downloaded += len(chunk)
+                                if downloaded > 500 * 1024 * 1024:
+                                    raise ValueError("File too large - exceeded 500MB limit during download")
+
+                    print(f"Downloaded {downloaded / 1024 / 1024:.1f}MB")
                 except Exception as e:
-                    raise ValueError(f"Failed to download audio file: {str(e)[:200]}")
+                    print(f"Audio file download error: {str(e)}")
+                    raise ValueError(f"Failed to download audio: {str(e)[:200]}")
             else:
                 # Use yt-dlp for platform URLs (YouTube, etc.)
                 try:
@@ -90,13 +105,24 @@ class WhisperTranscriber:
             if not os.path.exists(audio_path):
                 raise ValueError("Could not download audio from that URL")
 
-            print(f"Downloaded {os.path.getsize(audio_path) / 1024 / 1024:.1f}MB, transcribing...")
+            if not os.path.exists(audio_path):
+                raise ValueError("Audio file was not created successfully")
 
-            result = self.model.transcribe(
-                audio_path,
-                language=language if language and language != "auto-detect" else None,
-                fp16=True,
-            )
+            file_size = os.path.getsize(audio_path) / 1024 / 1024
+            print(f"Downloaded {file_size:.1f}MB, transcribing...")
+
+            if file_size == 0:
+                raise ValueError("Downloaded file is empty")
+
+            try:
+                result = self.model.transcribe(
+                    audio_path,
+                    language=language if language and language != "auto-detect" else None,
+                    fp16=True,
+                )
+            except Exception as e:
+                print(f"Transcription error: {str(e)}")
+                raise ValueError(f"Transcription failed: {str(e)[:200]}")
 
             segments = [
                 {
