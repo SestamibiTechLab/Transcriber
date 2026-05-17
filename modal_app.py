@@ -33,7 +33,7 @@ cache_vol = modal.Volume.from_name("whisper-cache", create_if_missing=True)
     image=image,
     gpu="any",
     volumes={"/cache": cache_vol},
-    timeout=3600,
+    timeout=7200,  # 2 hours for large files
 )
 class WhisperTranscriber:
     @modal.enter()
@@ -140,7 +140,7 @@ class WhisperTranscriber:
             }
 
 
-@app.function(image=image)
+@app.function(image=image, timeout=7200)
 @modal.asgi_app()
 def fastapi_app():
     from fastapi import FastAPI, HTTPException
