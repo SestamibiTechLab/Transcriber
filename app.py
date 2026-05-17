@@ -57,7 +57,7 @@ def transcribe():
             if not os.path.exists(audio_path):
                 return jsonify({"error": "Could not download audio from that URL"}), 400
 
-            result = model.transcribe(audio_path, fp16=False)
+            result = model.transcribe(audio_path, fp16=True)
 
             segments = [
                 {"start": round(s["start"], 1), "end": round(s["end"], 1), "text": s["text"].strip()}
