@@ -43,8 +43,8 @@ def transcribe():
                 }],
                 "quiet": True,
                 "no_warnings": True,
-                # Cap download at 60 minutes of audio to protect free tier
-                "match_filter": yt_dlp.utils.match_filter_func("duration < 3600"),
+                # Cap download at 30 minutes of audio to protect free tier
+                "match_filter": yt_dlp.utils.match_filter_func("duration < 1800"),
             }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -57,7 +57,7 @@ def transcribe():
             if not os.path.exists(audio_path):
                 return jsonify({"error": "Could not download audio from that URL"}), 400
 
-            result = model.transcribe(audio_path, fp16=True)
+            result = model.transcribe(audio_path, fp16=False)
 
             segments = [
                 {"start": round(s["start"], 1), "end": round(s["end"], 1), "text": s["text"].strip()}
