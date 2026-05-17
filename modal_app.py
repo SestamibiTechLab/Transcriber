@@ -17,10 +17,13 @@ app = modal.App("podcast-transcriber")
 image = (
     modal.Image.debian_slim()
     .pip_install(
-        "openai-whisper",
-        "yt-dlp",
-        "torch",
         "numpy",
+        "openai-whisper",
+        "torch",
+        "yt-dlp",
+        "fastapi",
+        "uvicorn",
+        "python-multipart",
     )
     .apt_install("ffmpeg")
 )
