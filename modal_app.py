@@ -119,6 +119,7 @@ class WhisperTranscriber:
                     audio_path,
                     language=language if language and language != "auto-detect" else None,
                     fp16=True,
+                    initial_prompt="Add proper punctuation and capitalization. Break into complete sentences.",
                 )
             except Exception as e:
                 print(f"Transcription error: {str(e)}")

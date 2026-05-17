@@ -215,7 +215,10 @@
             <button type="submit" id="submitBtn">Transcribe</button>
         </form>
         <div id="results" class="results">
-            <h2>✅ Transcription Complete</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">✅ Transcription Complete</h2>
+                <button id="downloadBtn" type="button" style="width: auto; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight: 600;">⬇️ Download TXT</button>
+            </div>
             <div class="metadata">
                 <div class="meta-item">
                     <div class="meta-label">Detected Language</div>
@@ -334,6 +337,22 @@
             const secs = Math.floor(seconds % 60);
             return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const fullText = document.getElementById('fullText').textContent;
+            const language = document.getElementById('language-result').textContent;
+
+            const content = `Transcription\nLanguage: ${language}\n\n${fullText}`;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transcription_${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
 
         checkHealth();
     </script>
