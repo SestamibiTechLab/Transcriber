@@ -40,8 +40,8 @@ class WhisperTranscriber:
     def load_model(self):
         import whisper
         print("Loading Whisper model...")
-        self.model = whisper.load_model("base", device="cuda")
-        print("Model loaded on GPU")
+        self.model = whisper.load_model("tiny", device="cuda")
+        print("✅ Tiny model loaded on GPU (faster transcription)")
 
     @modal.method()
     def transcribe(self, url: str, language: str = None) -> dict:
@@ -169,7 +169,7 @@ def fastapi_app():
 
     @web_app.get("/health")
     async def health():
-        return {"status": "ok", "model": "base", "device": "cuda"}
+        return {"status": "ok", "model": "tiny", "device": "cuda", "note": "Fast transcription mode"}
 
     @web_app.post("/transcribe")
     async def transcribe(request: TranscribeRequest):
