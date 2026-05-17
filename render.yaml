@@ -5,7 +5,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       apt-get install -y ffmpeg || true
-    startCommand: gunicorn app:app --timeout 600 --workers 1 --bind 0.0.0.0:$PORT
+    startCommand: gunicorn app:app --timeout 3600 --workers 1 --bind 0.0.0.0:$PORT
     envVars:
       - key: WHISPER_MODEL
         value: base
