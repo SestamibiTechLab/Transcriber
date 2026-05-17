@@ -8,8 +8,8 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder="static", static_url_path="/")
 CORS(app)
 
-# Load model once at startup (tiny or base fits in Render free tier RAM)
-MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")
+# Load model once at startup (tiny fits in Render free tier RAM)
+MODEL_SIZE = os.environ.get("WHISPER_MODEL", "tiny")
 print(f"Loading Whisper model: {MODEL_SIZE}")
 model = whisper.load_model(MODEL_SIZE)
 print("Model loaded.")
@@ -43,8 +43,8 @@ def transcribe():
                 }],
                 "quiet": True,
                 "no_warnings": True,
-                # Cap download at 90 minutes of audio to protect free tier
-                "match_filter": yt_dlp.utils.match_filter_func("duration < 5400"),
+                # Cap download at 60 minutes of audio to protect free tier
+                "match_filter": yt_dlp.utils.match_filter_func("duration < 3600"),
             }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
