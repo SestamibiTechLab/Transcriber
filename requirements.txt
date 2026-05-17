@@ -1,6 +1,5 @@
-setuptools>=65.0.0
 flask==3.0.3
 flask-cors==4.0.1
-openai-whisper==20231117
+openai-whisper>=20240930
 yt-dlp==2024.8.6
 gunicorn==22.0.0
