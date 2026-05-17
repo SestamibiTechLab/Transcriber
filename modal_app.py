@@ -125,6 +125,17 @@ class WhisperTranscriber:
                 print(f"Transcription error: {str(e)}")
                 raise ValueError(f"Transcription failed: {str(e)[:200]}")
 
+            # Format text with paragraphs every 5 sentences
+            full_text = result["text"].strip()
+            sentences = full_text.split(". ")
+            paragraphs = []
+            for i in range(0, len(sentences), 5):
+                paragraph = ". ".join(sentences[i:i+5])
+                if not paragraph.endswith("."):
+                    paragraph += "."
+                paragraphs.append(paragraph)
+            formatted_text = "\n\n".join(paragraphs)
+
             segments = [
                 {
                     "start": round(s["start"], 1),
@@ -135,7 +146,7 @@ class WhisperTranscriber:
             ]
 
             return {
-                "text": result["text"].strip(),
+                "text": formatted_text,
                 "language": result.get("language", "unknown"),
                 "segments": segments,
             }
