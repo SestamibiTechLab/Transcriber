@@ -111,6 +111,10 @@ def fastapi_app():
         url: str
         language: str = "auto-detect"
 
+    @web_app.get("/")
+    async def root():
+        return {"status": "Podcast Transcriber API is running", "endpoints": ["/health", "/transcribe"]}
+
     @web_app.get("/health")
     async def health():
         return {"status": "ok", "model": "base", "device": "cuda"}
