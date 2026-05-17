@@ -21,6 +21,7 @@ image = (
         "uvicorn",
         "python-multipart",
         "pydantic",
+        "requests",
     )
     .apt_install("ffmpeg")
 )
@@ -45,28 +46,43 @@ class WhisperTranscriber:
     @modal.method()
     def transcribe(self, url: str, language: str = None) -> dict:
         import yt_dlp
+        import requests
 
         with tempfile.TemporaryDirectory() as tmpdir:
             audio_path = os.path.join(tmpdir, "audio.mp3")
 
-            ydl_opts = {
-                "format": "bestaudio/best",
-                "outtmpl": audio_path,
-                "postprocessors": [{
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "128",
-                }],
-                "quiet": True,
-                "no_warnings": True,
-            }
-
             print(f"Downloading: {url}")
-            try:
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
-            except Exception as e:
-                raise ValueError(f"Download failed: {str(e)[:200]}")
+
+            # Check if it's a direct audio file (MP3, WAV, etc.)
+            if url.lower().endswith(('.mp3', '.wav', '.m4a', '.aac', '.flac', '.ogg')):
+                try:
+                    print("Detected direct audio file - downloading...")
+                    response = requests.get(url, timeout=300, stream=True)
+                    response.raise_for_status()
+                    with open(audio_path, 'wb') as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                except Exception as e:
+                    raise ValueError(f"Failed to download audio file: {str(e)[:200]}")
+            else:
+                # Use yt-dlp for platform URLs (YouTube, etc.)
+                try:
+                    ydl_opts = {
+                        "format": "bestaudio/best",
+                        "outtmpl": audio_path,
+                        "postprocessors": [{
+                            "key": "FFmpegExtractAudio",
+                            "preferredcodec": "mp3",
+                            "preferredquality": "128",
+                        }],
+                        "quiet": True,
+                        "no_warnings": True,
+                    }
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        ydl.download([url])
+                except Exception as e:
+                    raise ValueError(f"Download failed: {str(e)[:200]}")
 
             if not os.path.exists(audio_path):
                 audio_path = audio_path + ".mp3"
