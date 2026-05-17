@@ -288,12 +288,18 @@
                     body: JSON.stringify({ url, language })
                 });
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || 'Transcription failed');
+                const text = await response.text();
+                if (!text) throw new Error('Backend returned empty response — check Modal logs for crashes');
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    throw new Error('Invalid response: ' + text.slice(0, 200));
                 }
 
-                const data = await response.json();
+                if (!response.ok || data.detail) throw new Error(data.detail || 'Server error');
+
                 displayResults(data);
                 showStatus('✅ Transcription successful!', 'success');
 

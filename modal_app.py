@@ -102,9 +102,19 @@ class WhisperTranscriber:
 @modal.asgi_app()
 def fastapi_app():
     from fastapi import FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel
 
     web_app = FastAPI()
+
+    web_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     transcriber = WhisperTranscriber()
 
     class TranscribeRequest(BaseModel):
