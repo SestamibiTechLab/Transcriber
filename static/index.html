@@ -208,6 +208,12 @@
                     <option value="fr">French</option>
                 </select>
             </div>
+            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 20px;">
+                <input type="checkbox" id="useClaudeCheckbox" style="width: auto; margin-right: 10px;">
+                <label for="useClaudeCheckbox" style="margin: 0; font-size: 0.95em; color: #666;">
+                    ✨ Polish with Claude (slower, better grammar)
+                </label>
+            </div>
             <div class="loading" id="loading">
                 <span class="spinner"></span>
                 Transcribing... This may take a few minutes
@@ -271,6 +277,7 @@
             e.preventDefault();
             const url = urlInput.value.trim();
             const language = languageSelect.value;
+            const useClauде = document.getElementById('useClaudeCheckbox').checked;
 
             if (!url) {
                 showStatus('Please enter a URL', 'error');
@@ -282,11 +289,14 @@
             statusDiv.className = 'status';
             resultsDiv.classList.remove('show');
 
+            const message = useClauде ? 'Transcribing & polishing with Claude...' : 'Transcribing...';
+            loadingDiv.innerHTML = `<span class="spinner"></span>\n${message}`;
+
             try {
                 const response = await fetch(`${API_URL}/transcribe`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url, language })
+                    body: JSON.stringify({ url, language, use_claude: useClauде })
                 });
 
                 const text = await response.text();

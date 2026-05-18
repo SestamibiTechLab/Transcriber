@@ -67,7 +67,7 @@ class WhisperTranscriber:
             return text
 
     @modal.method()
-    def transcribe(self, url: str, language: str = None) -> dict:
+    def transcribe(self, url: str, language: str = None, use_claude: bool = False) -> dict:
         import yt_dlp
         import requests
 
@@ -148,11 +148,13 @@ class WhisperTranscriber:
                 print(f"Transcription error: {str(e)}")
                 raise ValueError(f"Transcription failed: {str(e)[:200]}")
 
-            # Format text with paragraphs every 5 sentences
+            # Optionally improve grammar using Claude
             full_text = result["text"].strip()
-            # Skip Claude for now - too slow, causing timeout
-            # Uncomment when Modal timeout increases or async polling implemented
-            # full_text = self.improve_grammar(full_text)
+            if use_claude:
+                print("🔧 User requested Claude grammar polish")
+                full_text = self.improve_grammar(full_text)
+
+            # Format text with paragraphs every 5 sentences
             sentences = full_text.split(". ")
             paragraphs = []
             for i in range(0, len(sentences), 5):
@@ -200,6 +202,7 @@ def fastapi_app():
     class TranscribeRequest(BaseModel):
         url: str
         language: str = "auto-detect"
+        use_claude: bool = False
 
     @web_app.get("/")
     async def root():
@@ -217,6 +220,7 @@ def fastapi_app():
             result = transcriber.transcribe.remote(
                 request.url.strip(),
                 request.language if request.language != "auto-detect" else None,
+                request.use_claude
             )
             return result
         except ValueError as e:
