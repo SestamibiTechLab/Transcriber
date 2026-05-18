@@ -35,6 +35,7 @@ cache_vol = modal.Volume.from_name("whisper-cache", create_if_missing=True)
     gpu="any",
     volumes={"/cache": cache_vol},
     timeout=7200,  # 2 hours for large files
+    secrets=[modal.Secret.from_name("google-api")],
 )
 class WhisperTranscriber:
     @modal.enter()
@@ -183,7 +184,7 @@ Return only the improved text, without any explanation or preamble."""
             }
 
 
-@app.function(image=image, timeout=7200)
+@app.function(image=image, timeout=7200, secrets=[modal.Secret.from_name("google-api")])
 @modal.asgi_app()
 def fastapi_app():
     from fastapi import FastAPI, HTTPException
