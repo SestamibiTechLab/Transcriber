@@ -148,11 +148,11 @@ class WhisperTranscriber:
                 print(f"Transcription error: {str(e)}")
                 raise ValueError(f"Transcription failed: {str(e)[:200]}")
 
-            # Improve grammar using Claude
-            full_text = result["text"].strip()
-            full_text = self.improve_grammar(full_text)
-
             # Format text with paragraphs every 5 sentences
+            full_text = result["text"].strip()
+            # Skip Claude for now - too slow, causing timeout
+            # Uncomment when Modal timeout increases or async polling implemented
+            # full_text = self.improve_grammar(full_text)
             sentences = full_text.split(". ")
             paragraphs = []
             for i in range(0, len(sentences), 5):
