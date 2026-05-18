@@ -22,7 +22,7 @@ image = (
         "python-multipart",
         "pydantic",
         "requests",
-        "google-generativeai",
+        "google-genai",
     )
     .apt_install("ffmpeg")
 )
@@ -47,16 +47,16 @@ class WhisperTranscriber:
 
     def improve_grammar(self, text: str) -> str:
         """Use Gemini to improve grammar and readability of transcription"""
-        import google.generativeai as genai
+        import google.genai as genai
 
         api_key = os.environ.get("GOOGLE_API_KEY")
         if not api_key:
-            print("No GOOGLE_API_KEY set - skipping grammar improvement")
+            print("⚠️  No GOOGLE_API_KEY - skipping grammar improvement")
             return text
 
         try:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            print(f"🔧 Improving grammar with Gemini... (text: {len(text)} chars)")
+            client = genai.Client(api_key=api_key)
 
             prompt = f"""Please improve the grammar, punctuation, and readability of this transcribed text while preserving the original meaning and content. Fix any run-on sentences, missing punctuation, and awkward phrasing:
 
@@ -64,12 +64,16 @@ class WhisperTranscriber:
 
 Return only the improved text, without any explanation or preamble."""
 
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt,
+            )
             improved = response.text.strip()
-            print(f"Grammar improvement applied ({len(improved)} chars)")
+            print(f"✅ Grammar improvement applied! ({len(improved)} chars)")
             return improved
         except Exception as e:
-            print(f"Grammar improvement failed: {str(e)}")
+            print(f"❌ Grammar improvement failed: {type(e).__name__}: {str(e)}")
+            print("Returning original text")
             return text
 
     @modal.method()
