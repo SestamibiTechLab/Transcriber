@@ -213,12 +213,10 @@
                 Transcribing... This may take a few minutes
             </div>
             <button type="submit" id="submitBtn">Transcribe</button>
+            <button type="button" id="downloadBtn" style="background: #28a745; margin-top: 10px; display: none;">⬇️ Download TXT</button>
         </form>
         <div id="results" class="results">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">✅ Transcription Complete</h2>
-                <button id="downloadBtn" type="button" style="width: auto; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight: 600;">⬇️ Download TXT</button>
-            </div>
+            <h2>✅ Transcription Complete</h2>
             <div class="metadata">
                 <div class="meta-item">
                     <div class="meta-label">Detected Language</div>
@@ -304,6 +302,7 @@
                 if (!response.ok || data.detail) throw new Error(data.detail || 'Server error');
 
                 displayResults(data);
+                document.getElementById('downloadBtn').style.display = 'block';
                 showStatus('✅ Transcription successful!', 'success');
 
             } catch (error) {
@@ -338,7 +337,8 @@
             return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        document.getElementById('downloadBtn').addEventListener('click', () => {
+        document.getElementById('downloadBtn').addEventListener('click', (e) => {
+            e.preventDefault();
             const fullText = document.getElementById('fullText').textContent;
             const language = document.getElementById('language-result').textContent;
 

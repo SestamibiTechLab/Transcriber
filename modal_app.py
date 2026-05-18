@@ -22,6 +22,7 @@ image = (
         "python-multipart",
         "pydantic",
         "requests",
+        "google-generativeai",
     )
     .apt_install("ffmpeg")
 )
@@ -42,6 +43,33 @@ class WhisperTranscriber:
         print("Loading Whisper model...")
         self.model = whisper.load_model("base", device="cuda")
         print("✅ Base model loaded on GPU")
+
+    def improve_grammar(self, text: str) -> str:
+        """Use Gemini to improve grammar and readability of transcription"""
+        import google.generativeai as genai
+
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
+            print("No GOOGLE_API_KEY set - skipping grammar improvement")
+            return text
+
+        try:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-1.5-flash")
+
+            prompt = f"""Please improve the grammar, punctuation, and readability of this transcribed text while preserving the original meaning and content. Fix any run-on sentences, missing punctuation, and awkward phrasing:
+
+{text}
+
+Return only the improved text, without any explanation or preamble."""
+
+            response = model.generate_content(prompt)
+            improved = response.text.strip()
+            print(f"Grammar improvement applied ({len(improved)} chars)")
+            return improved
+        except Exception as e:
+            print(f"Grammar improvement failed: {str(e)}")
+            return text
 
     @modal.method()
     def transcribe(self, url: str, language: str = None) -> dict:
@@ -125,8 +153,11 @@ class WhisperTranscriber:
                 print(f"Transcription error: {str(e)}")
                 raise ValueError(f"Transcription failed: {str(e)[:200]}")
 
-            # Format text with paragraphs every 5 sentences
+            # Improve grammar using Gemini (optional)
             full_text = result["text"].strip()
+            full_text = self.improve_grammar(full_text)
+
+            # Format text with paragraphs every 5 sentences
             sentences = full_text.split(". ")
             paragraphs = []
             for i in range(0, len(sentences), 5):
