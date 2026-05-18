@@ -22,7 +22,7 @@ image = (
         "python-multipart",
         "pydantic",
         "requests",
-        "google-genai",
+        "anthropic",
     )
     .apt_install("ffmpeg")
 )
@@ -35,7 +35,7 @@ cache_vol = modal.Volume.from_name("whisper-cache", create_if_missing=True)
     gpu="any",
     volumes={"/cache": cache_vol},
     timeout=7200,  # 2 hours for large files
-    secrets=[modal.Secret.from_name("google-api")],
+    secrets=[modal.Secret.from_name("anthropic-api")],
 )
 class WhisperTranscriber:
     @modal.enter()
@@ -46,34 +46,24 @@ class WhisperTranscriber:
         print("✅ Base model loaded on GPU")
 
     def improve_grammar(self, text: str) -> str:
-        """Use Gemini to improve grammar and readability of transcription"""
-        import google.genai as genai
-
-        api_key = os.environ.get("GOOGLE_API_KEY")
-        if not api_key:
-            print("⚠️  No GOOGLE_API_KEY - skipping grammar improvement")
-            return text
-
+        """Use Claude to fix grammar and punctuation"""
         try:
-            print(f"🔧 Improving grammar with Gemini... (text: {len(text)} chars)")
-            client = genai.Client(api_key=api_key)
-
-            prompt = f"""Please improve the grammar, punctuation, and readability of this transcribed text while preserving the original meaning and content. Fix any run-on sentences, missing punctuation, and awkward phrasing:
-
-{text}
-
-Return only the improved text, without any explanation or preamble."""
-
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
+            import anthropic
+            client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+            print(f"✨ Improving grammar with Claude Haiku... ({len(text)} chars)")
+            msg = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=4096,
+                messages=[{
+                    "role": "user",
+                    "content": f"Fix grammar and punctuation in this transcript. Return only the corrected text, no commentary:\n\n{text}"
+                }]
             )
-            improved = response.text.strip()
-            print(f"✅ Grammar improvement applied! ({len(improved)} chars)")
+            improved = msg.content[0].text
+            print(f"✅ Grammar improved! ({len(improved)} chars)")
             return improved
         except Exception as e:
-            print(f"❌ Grammar improvement failed: {type(e).__name__}: {str(e)}")
-            print("Returning original text")
+            print(f"❌ Grammar improvement failed: {e}")
             return text
 
     @modal.method()
@@ -158,7 +148,7 @@ Return only the improved text, without any explanation or preamble."""
                 print(f"Transcription error: {str(e)}")
                 raise ValueError(f"Transcription failed: {str(e)[:200]}")
 
-            # Improve grammar using Gemini (optional)
+            # Improve grammar using Claude
             full_text = result["text"].strip()
             full_text = self.improve_grammar(full_text)
 
@@ -188,7 +178,7 @@ Return only the improved text, without any explanation or preamble."""
             }
 
 
-@app.function(image=image, timeout=7200, secrets=[modal.Secret.from_name("google-api")])
+@app.function(image=image, timeout=7200, secrets=[modal.Secret.from_name("anthropic-api")])
 @modal.asgi_app()
 def fastapi_app():
     from fastapi import FastAPI, HTTPException
