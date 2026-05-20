@@ -55,9 +55,14 @@ class WhisperTranscriber:
             msg = client.messages.create(
                 model="claude-haiku-4-5-20251001",
                 max_tokens=4096,
+                system=[{
+                    "type": "text",
+                    "text": "Fix grammar and punctuation in transcripts. Return only the corrected text, no commentary.",
+                    "cache_control": {"type": "ephemeral"}
+                }],
                 messages=[{
                     "role": "user",
-                    "content": f"Fix grammar and punctuation in this transcript. Return only the corrected text, no commentary:\n\n{text}"
+                    "content": f"{text}"
                 }]
             )
             improved = msg.content[0].text
