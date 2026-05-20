@@ -252,6 +252,25 @@
         const loadingDiv = document.getElementById('loading');
         const statusDiv = document.getElementById('status');
         const resultsDiv = document.getElementById('results');
+        let currentData = null;
+
+        function saveTranscription(data) {
+            currentData = data;
+            localStorage.setItem('lastTranscription', JSON.stringify(data));
+        }
+
+        function loadSavedTranscription() {
+            const saved = localStorage.getItem('lastTranscription');
+            if (saved) {
+                try {
+                    currentData = JSON.parse(saved);
+                    displayResults(currentData);
+                    document.getElementById('downloadBtn').style.display = 'block';
+                } catch (e) {
+                    console.error('Failed to load saved transcription:', e);
+                }
+            }
+        }
 
         async function checkHealth() {
             try {
@@ -311,6 +330,7 @@
 
                 if (!response.ok || data.detail) throw new Error(data.detail || 'Server error');
 
+                saveTranscription(data);
                 displayResults(data);
                 document.getElementById('downloadBtn').style.display = 'block';
                 showStatus('✅ Transcription successful!', 'success');
@@ -365,6 +385,7 @@
         });
 
         checkHealth();
+        loadSavedTranscription();
     </script>
 </body>
 </html>
