@@ -6,6 +6,7 @@ Serverless transcription service with GPU support and permanent URL
 import os
 import tempfile
 import modal
+import asyncio
 
 # Modal setup
 app = modal.App("podcast-transcriber")
@@ -217,7 +218,8 @@ def fastapi_app():
         if not request.url.strip():
             raise HTTPException(status_code=400, detail="No URL provided")
         try:
-            result = await transcriber.transcribe.aio(
+            result = await asyncio.to_thread(
+                transcriber.transcribe.remote,
                 request.url.strip(),
                 request.language if request.language != "auto-detect" else None,
                 request.use_claude
