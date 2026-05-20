@@ -155,16 +155,6 @@ class WhisperTranscriber:
                 print("🔧 User requested Claude grammar polish")
                 full_text = self.improve_grammar(full_text)
 
-            # Format text with paragraphs every 5 sentences
-            sentences = full_text.split(". ")
-            paragraphs = []
-            for i in range(0, len(sentences), 5):
-                paragraph = ". ".join(sentences[i:i+5])
-                if not paragraph.endswith("."):
-                    paragraph += "."
-                paragraphs.append(paragraph)
-            formatted_text = "\n\n".join(paragraphs)
-
             segments = [
                 {
                     "start": round(s["start"], 1),
@@ -175,7 +165,7 @@ class WhisperTranscriber:
             ]
 
             return {
-                "text": formatted_text,
+                "text": full_text,
                 "language": result.get("language", "unknown"),
                 "segments": segments,
             }
