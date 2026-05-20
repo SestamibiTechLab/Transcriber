@@ -217,7 +217,7 @@ def fastapi_app():
         if not request.url.strip():
             raise HTTPException(status_code=400, detail="No URL provided")
         try:
-            result = transcriber.transcribe.remote(
+            result = await transcriber.transcribe.aio(
                 request.url.strip(),
                 request.language if request.language != "auto-detect" else None,
                 request.use_claude
